@@ -55,10 +55,6 @@ def zips_etl():
     zips_df.spatial.project(4326)
     zips_df.spatial.sr = {"wkid": 4326}
 
-    #zips_featureset = zips_df.spatial.to_featureset()
-    # out_zip_shp = Path(total_address_fldr, f'ZIPC_4999_{today}')
-    # zips_df.spatial.to_featureclass(location=out_zip_shp, sanitize_columns=False)
-
     out_json = Path(total_address_fldr, f'ZIPC_49_{today}.json')
     out_json.write_text(zips_df.spatial.to_featureset().to_json, encoding='utf-8')
 
