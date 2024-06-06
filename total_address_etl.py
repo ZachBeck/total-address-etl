@@ -102,7 +102,7 @@ def precinct_etl():
 
     precinct_df = pd.DataFrame.spatial.from_layer(arcgis.features.FeatureLayer.fromitem(gis.content.get('d33f596419d74948a45070275632b8e0')))
     precinct_df = precinct_df.reindex(columns=['PrecinctID', 'CountyID', 'SHAPE'])
-    precinct_df['CountyID'] = precinct_df['CountyID'].map(str)
+    precinct_df['CountyID'] = precinct_df['CountyID'].astype(str)
     precinct_df['CountyID'] = precinct_df['CountyID'].map(number_to_fips)
     precinct_df = precinct_df.rename(columns={'PrecinctID':'PPartName', 'CountyID':'County'})
     precinct_df.spatial.set_geometry("SHAPE")
@@ -171,7 +171,7 @@ def address_etl():
     add_sdf.spatial.set_geometry('shape')
  
     add_sdf['addnum'] = add_sdf['addnum'].astype(str)
-    add_sdf['addnum'] = add_sdf[['addnum', 'addnumsuffix']].agg(''.join, axis=1)
+    add_sdf['addnum'] = add_sdf['addnum'] + add_sdf['addnumsuffix']
 
     add_sdf['Lat'] = add_sdf['shape'].apply(lambda shape: shape.y)
     add_sdf['Lon'] = add_sdf['shape'].apply(lambda shape: shape.x)
