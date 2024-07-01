@@ -101,10 +101,10 @@ def precinct_etl():
     }
 
     precinct_df = pd.DataFrame.spatial.from_layer(arcgis.features.FeatureLayer.fromitem(gis.content.get('d33f596419d74948a45070275632b8e0')))
-    precinct_df = precinct_df.reindex(columns=['PrecinctID', 'CountyID', 'SHAPE'])
+    precinct_df = precinct_df.reindex(columns=['VistaID', 'CountyID', 'SHAPE'])
     precinct_df['CountyID'] = precinct_df['CountyID'].astype(str)
     precinct_df['CountyID'] = precinct_df['CountyID'].map(number_to_fips)
-    precinct_df = precinct_df.rename(columns={'PrecinctID':'PPartName', 'CountyID':'County'})
+    precinct_df = precinct_df.rename(columns={'VistaID':'PPartName', 'CountyID':'County'})
     precinct_df.spatial.set_geometry("SHAPE")
     precinct_df.spatial.project(4326)
     precinct_df.spatial.sr = {"wkid": 4326}
@@ -116,7 +116,7 @@ def precinct_etl():
     # out_geojson = Path(total_address_fldr, f'PRCT_49_{today}.geojson')
     # out_geojson.write_text(precinct_df.spatial.to_featureset().to_geojson, encoding='utf-8') 
 
-#precinct_etl()
+precinct_etl()
 
 
 def address_etl():
@@ -187,4 +187,4 @@ def address_etl():
     add_sdf.to_csv(address_csv)
 
 
-address_etl()
+#address_etl()
