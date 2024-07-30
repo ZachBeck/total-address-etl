@@ -116,7 +116,7 @@ def precinct_etl():
     # out_geojson = Path(total_address_fldr, f'PRCT_49_{today}.geojson')
     # out_geojson.write_text(precinct_df.spatial.to_featureset().to_geojson, encoding='utf-8') 
 
-precinct_etl()
+#precinct_etl()
 
 
 def address_etl():
@@ -161,6 +161,11 @@ def address_etl():
         f"select * from {add_pts_table}", engine, index_col='xid', crs=26912, geom_col='shape'
     )
 
+    municipalities = 'opensgid.boundaries.municipal_boundaries'
+    muni_df = gpd.read_postgis(
+        f"select * from {municipalities}", engine, index_col='xid', crs=26912, geom_col='shape')
+    muni_name_dict = pd.Series(muni_df.name.values, index=muni_df.shortdesc).to_dict()
+
     add_df.to_crs(crs=4326, epsg=None, inplace=True)
 
     add_sdf = pd.DataFrame.spatial.from_geodataframe(add_df, column_name='shape')
@@ -172,6 +177,7 @@ def address_etl():
  
     add_sdf['addnum'] = add_sdf['addnum'].astype(str)
     add_sdf['addnum'] = add_sdf['addnum'] + add_sdf['addnumsuffix']
+    add_sdf['city'] = add_sdf['city'].map(muni_name_dict).str.upper() 
 
     add_sdf['Lat'] = add_sdf['shape'].apply(lambda shape: shape.y)
     add_sdf['Lon'] = add_sdf['shape'].apply(lambda shape: shape.x)
@@ -187,4 +193,4 @@ def address_etl():
     add_sdf.to_csv(address_csv)
 
 
-#address_etl()
+address_etl()
