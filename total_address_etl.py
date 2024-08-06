@@ -4,6 +4,7 @@ import pandas as pd
 import geopandas as gpd
 import arcgis
 import sqlalchemy
+import numpy as np
 
 
 today = datetime.datetime.now().strftime("%Y%m%d")
@@ -166,24 +167,25 @@ def address_etl():
         f"select * from {municipalities}", engine, index_col='xid', crs=26912, geom_col='shape')
     muni_name_dict = pd.Series(muni_df.name.values, index=muni_df.shortdesc).to_dict()
 
-    add_df.to_crs(crs=4326, epsg=None, inplace=True)
 
+    add_df.to_crs(crs=4326, epsg=None, inplace=True)
     add_sdf = pd.DataFrame.spatial.from_geodataframe(add_df, column_name='shape')
-   
-    add_sdf = add_sdf.reindex(columns=['fulladd', 'addnum', 'addnumsuffix', 'prefixdir', 'streetname', 'streettype',
+    add_sdf = add_sdf.reindex(columns=['fulladd', 'addnum', 'addnumsuff', 'prefixdir', 'streetname', 'streettype',
                                        'suffixdir', 'unitid', 'city', 'zipcode', 'countyid', 'pttype', 'shape'])
-    
     add_sdf.spatial.set_geometry('shape')
+    
+    add_sdf['city'] = add_sdf['city'].map(muni_name_dict).str.upper()
+
+    add_sdf['fulladd'] = add_sdf[['fulladd', 'city', 'zipcode']].fillna('').agg(' '.join, axis=1)
+    add_sdf['fulladd'] = add_sdf['fulladd'].str.replace('  ', ' ')
  
-    add_sdf['addnum'] = add_sdf['addnum'].astype(str)
-    add_sdf['addnum'] = add_sdf['addnum'] + add_sdf['addnumsuffix']
-    add_sdf['city'] = add_sdf['city'].map(muni_name_dict).str.upper() 
+    add_sdf['addnum'] = add_sdf['addnum'].astype(str) + add_sdf['addnumsuff'].fillna('')
 
     add_sdf['Lat'] = add_sdf['shape'].apply(lambda shape: shape.y)
     add_sdf['Lon'] = add_sdf['shape'].apply(lambda shape: shape.x)
     
     add_sdf = add_sdf.drop('shape', axis=1)
-    add_sdf['unitid'] = add_sdf['unitid'].apply(lambda x: '1' if x != '' else '0')
+    add_sdf['unitid'] = add_sdf['unitid'].apply(lambda x: '1' if x not in ['', ' '] else '0')
     add_sdf['pttype'] = add_sdf['pttype'].map(addr_type_map)
     add_sdf = add_sdf.rename(columns=field_map)
     add_sdf = add_sdf.reindex(columns=['Original Addr string', 'Addr #', 'Prefix', 'Street Name','Street type', 'Suffix', 'Multi-Unit',
